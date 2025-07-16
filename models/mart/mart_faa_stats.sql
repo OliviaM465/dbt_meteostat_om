@@ -46,4 +46,4 @@ FROM origin_count oc
 LEFT JOIN dest_count dc ON oc.airport = dc.airport
 LEFT JOIN sorted_flights sf ON oc.airport = sf.airport
 LEFT JOIN actual_flights af ON oc.airport = af.airport
-LEFT JOIN airports_table at ON oc.airport = at.faa;
+LEFT JOIN airports_table at ON oc.airport = at.faa
