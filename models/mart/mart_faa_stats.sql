@@ -32,7 +32,7 @@ FROM {{ref('prep_airports')}}
 )
 SELECT
 		at.COUNTRY y,
-		region,
+		at.region,
 		at.CITY,
 		at.name,
 		oc.airport,
