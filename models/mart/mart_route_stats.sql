@@ -38,4 +38,4 @@ SELECT
 		diverted_flights
 FROM table_mart_route tmr
 JOIN airports ao ON tmr.origin = ao.faa
-JOIN airports ad ON tmr.dest = ad.faa;
+JOIN airports ad ON tmr.dest = ad.faa
