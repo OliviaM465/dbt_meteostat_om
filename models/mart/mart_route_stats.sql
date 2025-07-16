@@ -19,16 +19,16 @@ WITH table_mart_route AS
 		dest
 )
 SELECT 
-		ao.tail_number,
-		ao.airline,
+		tmr.tail_number,
+		tmr.airline,
 		ao.country,
 		ao.city,
 		ao.name,
-		ao.origin,
+		tmr.origin,
 		ad.country,
 		ad.city,
 		ad.name,
-		ad.dest,
+		tmr.dest,
 		total_num_route,
 		avg_elapsed_time,
 		avg_arr_delay_time,
