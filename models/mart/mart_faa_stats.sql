@@ -1,49 +1,42 @@
-WITH origin_count AS (
-	SELECT origin AS airport, -- determine all departures
-		   COUNT(*) AS departures_per_day
-	FROM {{ref('prep_flights')}}
+WITH departures AS ( 
+	SELECT origin AS faa
+			,COUNT(DISTINCT dest) AS nunique_to
+			,COUNT(sched_dep_time) AS dep_planned
+			,SUM(cancelled) AS dep_cancelled
+			,SUM(diverted) AS dep_diverted
+			,COUNT(arr_time) AS dep_n_flights
+	FROM {{ref('prep_flights')}} 
 	GROUP BY origin
+	ORDER BY origin
 ),
-dest_count AS (
-	SELECT dest AS airport, -- determine all arrivals
-		   COUNT(*) AS arrivals_per_day
-	FROM {{ref('prep_flights')}}
+arrivals AS (
+	SELECT dest AS faa
+			,COUNT(DISTINCT origin) AS nunique_from
+			,COUNT(sched_dep_time) AS arr_planned
+			,SUM(cancelled) AS arr_cancelled
+			,SUM(diverted) AS arr_diverted
+			,COUNT(arr_time) AS arr_n_flights
+	FROM {{ref('prep_flights')}} 
 	GROUP BY dest
+	ORDER BY dest
 ),
-actual_flights AS (
-SELECT origin AS airport, -- determine number of flights that were not diverted or cancelled (all planned)
-	count(*)AS actual_flight_num
-FROM {{ref('prep_flights')}}
-WHERE cancelled = 0 AND diverted = 0
-GROUP BY airport
-),
-sorted_flights AS 
-(
-SELECT origin AS airport, -- determine number of cancelled and diverted flights
-	SUM(cancelled) AS cancelled_num,
-	SUM(diverted) AS diverted_num,
-	count(*) AS all_flight_num
-FROM {{ref('prep_flights')}}
-GROUP BY airport
-),
-airports_table AS 
-(SELECT *
-FROM {{ref('prep_airports')}}
+total_stats AS (
+	SELECT faa
+			,nunique_to
+			,nunique_from
+			,dep_planned + arr_planned AS total_planned
+			,dep_cancelled + arr_cancelled AS total_cancelled
+			,dep_diverted + arr_diverted AS total_diverted
+			,dep_n_flights + arr_n_flights AS total_flights
+	FROM departures
+	JOIN arrivals
+	USING (faa)
 )
-SELECT
-		at.COUNTRY y,
-		at.region,
-		at.CITY,
-		at.name,
-		oc.airport,
-		arrivals_per_day,
-		departures_per_day,
-		cancelled_num,
-		diverted_num,
-		all_flight_num,
-		actual_flight_num
-FROM origin_count oc
-LEFT JOIN dest_count dc ON oc.airport = dc.airport
-LEFT JOIN sorted_flights sf ON oc.airport = sf.airport
-LEFT JOIN actual_flights af ON oc.airport = af.airport
-LEFT JOIN airports_table at ON oc.airport = at.faa
+SELECT a.city
+		,a.country
+		,a.name
+		, t.* 
+FROM total_stats t
+LEFT JOIN {{ref('prep_airports')}} a
+USING (faa)
+ORDER BY total_diverted DESC
